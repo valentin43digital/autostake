@@ -1,1 +1,1 @@
-# autostake
+# Autostake App
