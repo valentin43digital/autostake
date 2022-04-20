@@ -1,10 +1,11 @@
-import requests
+# import requests
 import time
 import math
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-from bs4 import BeautifulSoup
+#from bs4 import BeautifulSoup
+# asset apy tvl link график на dexscreener ссылкой и ссылку на маркетплейс типа yieldwolf
 
 
 def get_driver():
@@ -20,7 +21,7 @@ def get_driver():
     options = webdriver.ChromeOptions()
     options.add_argument(f"user-agent={headers['User-Agent']}")
     _driver = webdriver.Chrome(
-        executable_path="C:\\Users\\Valentin\\PycharmProjects\\autostake\\chromedriver\\chromedriver.exe",
+        executable_path="C:\\Solidity\\autostake\\chromedriver\\chromedriver.exe",
         options=options)
     return _driver
 
