@@ -21,7 +21,7 @@ def get_driver():
     options = webdriver.ChromeOptions()
     options.add_argument(f"user-agent={headers['User-Agent']}")
     _driver = webdriver.Chrome(
-        executable_path="C:\\Solidity\\autostake\\chromedriver\\chromedriver.exe",
+        executable_path="C:\\Projects\\autostake\\chromedriver\\chromedriver.exe",
         options=options)
     return _driver
 
