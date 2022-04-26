@@ -1,11 +1,35 @@
-# import requests
 import time
 import math
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-#from bs4 import BeautifulSoup
+from settings import account_address
+
 # asset apy tvl link график на dexscreener ссылкой и ссылку на маркетплейс типа yieldwolf
+
+
+class Element:
+    def __init__(self, type, value, content):
+        self.type = type
+        self.value = value
+        self.content = content
+
+    def wait(self, _driver):
+        element_loaded = False
+        while not element_loaded:
+            try:
+                if self.type == "CLASS_NAME":
+                    for element in _driver.find_elements(by=By.CLASS_NAME, value=self.value):
+                        if element.text.startswith(self.content):
+                            element_loaded = True
+                elif self.type == "TAG_NAME":
+                    for element in _driver.find_elements(by=By.TAG_NAME, value=self.value):
+                        if element.text.startswith(self.content):
+                            element_loaded = True
+            except Exception as ex:
+                pass
+            finally:
+                time.sleep(1)
 
 
 def get_driver():
@@ -26,10 +50,6 @@ def get_driver():
     return _driver
 
 
-def document_initialised(_driver):
-    return _driver.execute_script("return initialised")
-
-
 def get_inputs(_driver):
     """
 
@@ -45,7 +65,7 @@ def get_inputs(_driver):
         "min_tvl": data[4].find_element(By.TAG_NAME, 'input'),
         "max_tvl": data[5].find_element(By.TAG_NAME, 'input')
     }
-    buttons = driver.find_elements(by=By.TAG_NAME, value="button")
+    buttons = _driver.find_elements(by=By.TAG_NAME, value="button")
     _submit_button = None
     for button in buttons:
         if button.text.strip().lower() == "search pools":
@@ -53,19 +73,19 @@ def get_inputs(_driver):
     return _inputs, _submit_button
 
 
-def get_pools(_driver, **kwargs):
+def get_pools(**kwargs):
     """
     Search pools by filters
-    :param _driver: webdriver
     :param kwargs: token1, token2, min_apy, max_apy, min_tvl, max_tvl
     :return: _results
     """
     url = "https://www.yieldstation.net/pools"
     try:
+        driver = get_driver()
         driver.get(url=url)
-        time.sleep(6)
+        element = Element("TAG_NAME", "h1", "Pools Info")
+        element.wait(driver)
         # WebDriverWait(driver=driver, timeout=5).until(document_initialised(driver))
-
         # get inputs
         inputs, submit_button = get_inputs(_driver=driver)
 
@@ -73,11 +93,9 @@ def get_pools(_driver, **kwargs):
         for key, value in kwargs.items():
             inputs[key].clear()
             inputs[key].send_keys(value)
-        time.sleep(1)
         submit_button.click()
-
-        # waiting for page loading
-        time.sleep(10)
+        element = Element("CLASS_NAME", "v-data-footer__pagination", "1-25")
+        element.wait(driver)
 
         # pagination
         result_number = int(driver.find_element(by=By.CLASS_NAME, value="v-data-footer__pagination").text.split()[-1])
@@ -90,6 +108,8 @@ def get_pools(_driver, **kwargs):
         result = []
         i = 0
         while i < pages_number:
+            element = Element("TAG_NAME", "td", str(1+i*25))
+            element.wait(driver)
             rows = driver.find_elements(by=By.TAG_NAME, value="tr")
             print("rows = ", rows)
             for row in rows:
@@ -101,11 +121,10 @@ def get_pools(_driver, **kwargs):
                         "TVL": elements[5].text.strip()
                     })
                 except Exception as ex:
-                    print(ex)
+                    pass
             i += 1
             if i < pages_number:
                 next_page_button.click()
-                time.sleep(5)
     except Exception as ex:
         print(ex)
     finally:
@@ -114,15 +133,47 @@ def get_pools(_driver, **kwargs):
         return result
 
 
-def get_account(_driver):
+def get_balance(farms):
+    """
+    Gets balance from current pools
+    :param farms: list of current farms
+    :return:
+    """
+    driver = get_driver()
+    page = get_account_page(_driver=driver, farms=farms)
+    balance = parse_account_page(page)
+    return balance
 
+
+def get_account_page(_driver, farms):
     url = "https://www.yieldstation.net/v2/account/portfolio"
+    _driver.get(url=url)
     try:
-        driver.get(url=url)
-        time.sleep(10)
+        element = Element("CLASS_NAME", "inline-block", "Enter your")
+        element.wait(_driver)
+        address_input = _driver.find_element(by=By.CLASS_NAME, value="p-inputtext")
+        address_input.clear()
+        address_input.send_keys(account_address)
+        pools = _driver.find_elements(by=By.CLASS_NAME, value="logoLext")
+        for pool in pools:
+            if pool.text == farms:
+                pool.click()
+        enter_button = _driver.find_element(by=By.CLASS_NAME, value="enter-button")
+        enter_button.click()
+    except Exception as ex:
+        print(ex)
+    finally:
+        #print("Page is loaded")
+        return _driver
+    pass
 
-        _balance = []
-        rows = driver.find_elements(by=By.TAG_NAME, value="tr")
+
+def parse_account_page(page):
+    _balance = []
+    element = Element("CLASS_NAME", "p-paginator", "Showing")
+    element.wait(page)
+    try:
+        rows = page.find_elements(by=By.TAG_NAME, value="tr")
         for row in rows:
             try:
                 elements = row.find_elements(by=By.TAG_NAME, value="td")
@@ -137,8 +188,8 @@ def get_account(_driver):
     except Exception as ex:
         print(ex)
     finally:
-        #driver.close()
-        #driver.quit()
+        page.close()
+        page.quit()
         return _balance
 
 
@@ -149,14 +200,10 @@ if __name__ == "__main__":
     # Read searching options
     min_apy = 1000
     min_tvl = 10
-    driver = get_driver()
-    balance = get_account(_driver=driver)
-    print(balance)
+    #page = get_account_page(driver)
+    #balance = parse_account_page(page)
+    #print(balance)
 
-"""
-    # Init driver and open web page
-    driver = get_driver()
-    pools = get_pools(_driver=driver, min_apy=min_apy, min_tvl=min_tvl)
+    pools = get_pools(min_apy=min_apy, min_tvl=min_tvl)
     print("Pools =", len(pools))
     print(pools)
-"""
