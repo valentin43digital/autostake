@@ -45,6 +45,8 @@ def get_driver():
     }
     options = webdriver.ChromeOptions()
     options.add_argument(f"user-agent={headers['User-Agent']}")
+    options.add_argument('headless')
+    options.add_argument('window-size=1920,1080')
     _driver = webdriver.Chrome(
         executable_path="C:\\Projects\\autostake\\chromedriver\\chromedriver.exe",
         options=options)
@@ -153,7 +155,7 @@ def get_account_page(_driver, farms):
         element.wait(_driver)
         address_input = _driver.find_element(by=By.CLASS_NAME, value="p-inputtext")
         address_input.clear()
-        address_input.send_keys(config["ACCOUNT-ADDRESS"])
+        address_input.send_keys(config["ACCOUNT_ADDRESS"])
         pools = _driver.find_elements(by=By.CLASS_NAME, value="logoLext")
         for pool in pools:
             if pool.text == farms:
@@ -200,10 +202,9 @@ if __name__ == "__main__":
     # Read searching options
     min_apy = 1000
     min_tvl = 10
-    #page = get_account_page(driver)
-    #balance = parse_account_page(page)
-    #print(balance)
+    balance = get_balance("Beefy")
+    print(balance)
 
-    pools = get_pools(min_apy=min_apy, min_tvl=min_tvl)
-    print("Pools =", len(pools))
-    print(pools)
+    #pools = get_pools(min_apy=min_apy, min_tvl=min_tvl)
+    #print("Pools =", len(pools))
+    #print(pools)

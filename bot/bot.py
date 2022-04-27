@@ -4,8 +4,10 @@ from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.dispatcher import Dispatcher
 from aiogram.dispatcher.webhook import SendMessage
 from aiogram.utils.executor import start_webhook
-
+from keyboards import standard_keyboard
 from settings import (BOT_TOKEN, WEBHOOK_URL, WEBHOOK_PATH, WEBAPP_HOST, WEBAPP_PORT)
+from parsing import get_pools, get_balance
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -14,13 +16,28 @@ dp = Dispatcher(bot)
 dp.middleware.setup(LoggingMiddleware())
 
 
-@dp.message_handler()
-async def echo(message: types.Message):
-    # Regular request
-    await bot.send_message(message.chat.id, message.text)
+@dp.message_handler(text='Start')
+async def cmd_balance(message: types.Message):
+    await message.answer("Hi this is autostake bot\nYou can get balance or pools", reply_markup=standard_keyboard())
 
-    # or reply INTO webhook
-    return SendMessage(message.chat.id, message.text)
+
+@dp.message_handler(text='Balance')
+async def cmd_balance(message: types.Message):
+    await message.answer("Getting balance, please wait", reply_markup=standard_keyboard())
+    balance = get_balance("Beefy")
+    for row in balance:
+        await message.answer(row, reply_markup=standard_keyboard())
+
+
+@dp.message_handler(text='Pools')
+async def cmd_pools(message: types.Message):
+    await message.answer("Getting pools, please wait", reply_markup=standard_keyboard())
+    min_apy = 10000
+    min_tvl = 100
+    pools = get_pools(min_apy=min_apy, min_tvl=min_tvl)
+    await message.answer(f"Total pools ={len(pools)}", reply_markup=standard_keyboard())
+    for pool in pools:
+        await message.answer(pool, reply_markup=standard_keyboard())
 
 
 async def on_startup(dp):
