@@ -1,9 +1,10 @@
+import os
+from dotenv import dotenv_values
 import time
 import math
 from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-from settings import account_address
+from settings import config
 
 # asset apy tvl link график на dexscreener ссылкой и ссылку на маркетплейс типа yieldwolf
 
@@ -45,7 +46,7 @@ def get_driver():
     options = webdriver.ChromeOptions()
     options.add_argument(f"user-agent={headers['User-Agent']}")
     _driver = webdriver.Chrome(
-        executable_path="C:\\Solidity\\autostake\\chromedriver\\chromedriver.exe",
+        executable_path="C:\\Projects\\autostake\\chromedriver\\chromedriver.exe",
         options=options)
     return _driver
 
@@ -111,7 +112,6 @@ def get_pools(**kwargs):
             element = Element("TAG_NAME", "td", str(1+i*25))
             element.wait(driver)
             rows = driver.find_elements(by=By.TAG_NAME, value="tr")
-            print("rows = ", rows)
             for row in rows:
                 try:
                     elements = row.find_elements(by=By.TAG_NAME, value="td")
@@ -153,7 +153,7 @@ def get_account_page(_driver, farms):
         element.wait(_driver)
         address_input = _driver.find_element(by=By.CLASS_NAME, value="p-inputtext")
         address_input.clear()
-        address_input.send_keys(account_address)
+        address_input.send_keys(config["ACCOUNT-ADDRESS"])
         pools = _driver.find_elements(by=By.CLASS_NAME, value="logoLext")
         for pool in pools:
             if pool.text == farms:
