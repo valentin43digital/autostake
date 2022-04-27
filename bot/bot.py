@@ -1,10 +1,10 @@
 import logging
-
 from aiogram import Bot, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.dispatcher import Dispatcher
 from aiogram.dispatcher.webhook import SendMessage
 from aiogram.utils.executor import start_webhook
+
 from settings import (BOT_TOKEN, WEBHOOK_URL, WEBHOOK_PATH, WEBAPP_HOST, WEBAPP_PORT)
 
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +17,7 @@ dp.middleware.setup(LoggingMiddleware())
 @dp.message_handler()
 async def echo(message: types.Message):
     # Regular request
-    # await bot.send_message(message.chat.id, message.text)
+    await bot.send_message(message.chat.id, message.text)
 
     # or reply INTO webhook
     return SendMessage(message.chat.id, message.text)
